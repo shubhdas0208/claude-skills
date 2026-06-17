@@ -57,7 +57,6 @@ apart on disk because gstack installs into the same `~/.claude/skills/` folder.)
 - [ ] landing-report
 - [ ] learn
 - [ ] make-pdf
-- [ ] mom-test
 - [ ] office-hours
 - [ ] open-gstack-browser
 - [ ] pair-agent
