@@ -1,0 +1,10 @@
+{
+  "name": "ponytail",
+  "description": "Lazy senior-dev mode: forces the simplest solution that actually works. YAGNI-first ladder (skip it > stdlib > native > existing dep > one line > minimum code), with lite/full/ultra intensity. Bundles the ponytail skill plus audit, debt, gain, review, and help companions.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Shubh Sankalp Das"
+  },
+  "license": "MIT",
+  "keywords": ["yagni", "simplicity", "minimalism", "refactor", "code-quality"]
+}

@@ -1,11 +1,23 @@
 ﻿# Borrowed skills — manifest
 
 Generated: 2026-06-17
+Updated: 2026-07-13 — six third-party skills are now vendored in full (see table below) as a backup against pack reinstalls.
 
 A catalogue of skills/commands installed locally under `~/.claude/` that were
 NOT hand-authored as part of this repo. They mostly come from installed packs
 (gstack, ECC, Matt Pocock). Listed here as a record rather than copied in full,
 since they are re-installable and third-party.
+
+## Vendored in this folder (full copies)
+
+| Folder | Source | What it does |
+|--------|--------|--------------|
+| `brainstorming/` | superpowers plugin v5.1.0 | `/brainstorm` — explores intent, requirements, and design before any creative work |
+| `writing-plans/` | superpowers plugin v5.1.0 | `/writing-plans` — turns a spec into a step-by-step implementation plan |
+| `ponytail/` | ponytail plugin v1.0.0 (full plugin: 6 skills + 6 commands) | `/ponytail` — "lazy senior dev" mode; forces the simplest, shortest solution that works (YAGNI ladder; lite/full/ultra intensities) |
+| `improve/` | improve plugin v1.0.0 | `/improve` — codebase and architecture improvement workflow (audit playbook, plan template) |
+| `drawio-skill/` | 365-skills drawio plugin v1.14.0 | draw.io architecture flowcharts and diagrams (shape index, autolayout scripts) |
+| `ui-ux-pro-max/` | gstack | `/ui-ux-pro-max` — UI/UX design pro workflow |
 
 ## How to reclaim your own
 
