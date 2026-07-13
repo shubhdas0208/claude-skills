@@ -4,9 +4,10 @@ Private backup and home for my Claude Code skills and commands.
 
 ## Structure
 
-- **`my-skills/`** — skills I authored myself.
-  - `sidenote/` — persistent, project-scoped side note (SIDENOTE.md in-project + central index).
-  - `factcheck/` — verify-before-you-answer mode: live web research, citations, no guessing.
+- **`my-skills/`** — my working skill set: skills I authored plus adopted third-party skills I rely on.
+  - Authored: `sidenote/`, `factcheck/`, `mom-test/`, `topic-master/`.
+  - Adopted (copies also kept in `borrowed-skills/` with source attribution):
+    `brainstorming/`, `writing-plans/`, `ponytail/`, `improve/`, `drawio-skill/`, `ui-ux-pro-max/`.
   - `commands/` — slash-command shims that pair with the skills above.
 - **`borrowed-skills/`** — `MANIFEST.md` catalogues installed third-party skills/commands
   (gstack, ECC, Matt Pocock). Six key skills are vendored in full as backup:
