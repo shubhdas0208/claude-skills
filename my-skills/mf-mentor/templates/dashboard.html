@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MF Mentor — Dashboard</title>
+<style>
+  :root{--ink:#1a1a18;--paper:#faf9f6;--rule:#d8d5cc;--accent:#0d5c46;--warn:#a04000;--muted:#6b6960}
+  @media (prefers-color-scheme: dark){:root{--ink:#e8e6df;--paper:#181816;--rule:#3a3833;--accent:#5fbf9f;--warn:#e08040;--muted:#98958a}}
+  *{box-sizing:border-box;margin:0}
+  body{font:16px/1.55 Georgia,'Times New Roman',serif;color:var(--ink);background:var(--paper);max-width:52rem;margin:0 auto;padding:3rem 1.5rem}
+  h1{font-size:1.6rem;font-weight:600;letter-spacing:.01em}
+  .stamp{color:var(--muted);font-size:.85rem;margin:.25rem 0 2.5rem;font-style:italic}
+  h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);border-bottom:1px solid var(--rule);padding-bottom:.4rem;margin:2.5rem 0 1rem}
+  table{width:100%;border-collapse:collapse;font-size:.95rem}
+  th{text-align:left;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:.4rem .6rem .4rem 0}
+  td{padding:.45rem .6rem .45rem 0;border-top:1px solid var(--rule)}
+  .due{border-left:3px solid var(--warn);padding:.6rem 1rem;margin:.5rem 0;background:color-mix(in srgb,var(--warn) 6%,transparent)}
+  .ok{color:var(--accent)} .warn{color:var(--warn)}
+  .bar{display:inline-block;font-family:ui-monospace,monospace;letter-spacing:.1em}
+  .foot{margin-top:3rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--rule);padding-top:1rem}
+  .overflow{overflow-x:auto}
+</style>
+</head>
+<body>
+  <h1>MF Mentor</h1>
+  <p class="stamp">Regenerated {{DATE}} · a projection of the workspace — the files are the truth</p>
+
+  <h2>Due now</h2>
+  {{DUE_ITEMS}} <!-- each: <div class="due">…</div>, or <p class="ok">Nothing due.</p> -->
+
+  <h2>Goal</h2>
+  <p>{{GOAL_LINE}}</p>
+
+  <h2>Portfolio</h2>
+  <div class="overflow">
+  <table>
+    <tr><th>Slot</th><th>Role</th><th>Category</th><th>Target %</th><th>Status</th><th>Fund</th></tr>
+    {{SLOT_ROWS}}
+  </table>
+  </div>
+
+  <h2>In flight</h2>
+  {{IN_FLIGHT}}
+
+  <h2>Temptations</h2>
+  {{TEMPTATIONS}}
+
+  <h2>Mastery</h2>
+  {{MASTERY_BARS}} <!-- e.g. <p>Risk ratios <span class="bar">███░░</span> 3/5</p> -->
+
+  <p class="foot">Education, not advice. Every decision recorded in the workspace was yours.</p>
+</body>
+</html>
