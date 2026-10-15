@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title><!--LEDGER_TITLE--></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Report chrome. Deliberately not the product's palette, so the ledger never impersonates the product.
+   Product styling lives only inside the shadow-rooted mocks. */
+:root{
+  --paper:#F6F5F1;--surface:#FFFFFF;--surface2:#EEEDE7;--rule:#DCDAD1;--line:#E3E1D9;--lineStrong:#CDCBC1;
+  --ink:#16171A;--ink2:#46484A;--ink3:#7C7E7A;--ink4:#AEAFA9;--onInk:#E6E4DB;--onInk2:#B3B2AA;
+  --p0:#8E1B14;--p1:#B4600A;--p2:#3F6577;--p3:#7A7C74;
+  --ok:#26512F;--okSoft:#E6EFE7;--okLine:#CFE0D2;
+  --no:#B3261E;--noSoft:#FBE9E7;--noLine:#EFC9C4;
+  --chg:#8A5A08;--chgSoft:#FDF4E2;--chgLine:#F0DDB4;--chgDeep:#D9820B;
+  --new:#2E4FB8;--newSoft:#E9EDFA;--newLine:#C9D3F2;
+  --ui:"Archivo",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --rSm:8px;--rMd:12px;--rPill:999px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 190px}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--chgDeep);outline-offset:2px}
+
+/* masthead */
+/* The top of the page is a title, one line of description and one line of counts. Nothing up here
+   restates the suggestions: each one is decided in its own block below. */
+.mast{padding:46px 0 22px;border-bottom:2px solid var(--ink)}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);margin:0 0 14px}
+.mast h1{font-size:clamp(32px,4.8vw,56px);line-height:.98;letter-spacing:-.035em;font-weight:800;margin:0 0 14px;max-width:20ch}
+.mast h1 em{font-style:normal;color:var(--chgDeep)}
+.dek{font-size:clamp(15px,1.5vw,17px);line-height:1.5;color:var(--ink2);max-width:78ch;margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 26px;font-size:12.5px;color:var(--ink3);padding-top:14px;border-top:1px solid var(--rule)}
+.meta b{color:var(--ink);font-weight:600}
+
+/* stat line: one compact line of counts */
+.stats{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;padding:13px 0;border-bottom:1px solid var(--rule);color:var(--ink3)}
+.stat{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
+.stat .n{font-size:16px;font-weight:800;letter-spacing:-.02em;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+.stat .l{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.stat.P0 .n{color:var(--p0)}.stat.P1 .n{color:var(--p1)}.stat.P2 .n{color:var(--p2)}.stat.P3 .n{color:var(--p3)}
+.stat.rev .n{color:var(--chg)}.stat.chg .n{color:var(--new)}
+
+/* sections + notes */
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.sec{padding-top:66px}
+.sec>h2{font-size:clamp(24px,3vw,34px);letter-spacing:-.025em;font-weight:800;margin:0 0 10px;line-height:1.08}
+.sec>.sub{color:var(--ink2);max-width:70ch;margin:0 0 26px;font-size:15.5px}
+.note{background:var(--surface2);padding:13px 16px 14px;margin:12px 0 0;border-radius:var(--rSm);font-size:13.5px;line-height:1.55;color:var(--ink2);max-width:880px}
+.note::before{content:"";display:block;width:26px;height:2px;background:var(--ink);margin-bottom:9px}
+.note b{color:var(--ink)}
+.note p{margin:0 0 8px}.note p:last-child{margin:0}
+.note ul{margin:6px 0 0;padding-left:18px}
+.note.saf{background:var(--chgSoft)}.note.saf::before{background:var(--chgDeep)}
+.note.crit{background:var(--noSoft)}.note.crit::before{background:var(--no)}
+/* round context (assumptions, caveats) folds into one line; only a critical note stays open */
+.ctx{border-bottom:1px solid var(--rule)}
+.ctx>summary{display:flex;align-items:center;gap:9px;padding:12px 0;font-size:12.5px;font-weight:600;color:var(--ink2);cursor:pointer;list-style:none}
+.ctx>summary::-webkit-details-marker{display:none}
+.ctx>summary::before{content:"+";display:grid;place-items:center;width:18px;height:18px;flex:none;border:1px solid var(--lineStrong);border-radius:4px;background:var(--surface);font-weight:700;line-height:1;color:var(--ink2)}
+.ctx[open]>summary::before{content:"\2212"}
+.ctx>summary:hover{color:var(--ink)}
+.ctx .note{margin:0 0 12px}
+#notes>.note:last-child{margin-bottom:14px}
+
+/* filters */
+.ctrl{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:1px solid var(--rule);padding:14px 0 13px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.ctrl .lbl{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:0 3px 0 10px}
+.ctrl .lbl:first-child{margin-left:0}
+.chipf{appearance:none;border:1px solid var(--lineStrong);background:var(--surface);color:var(--ink2);font:600 12.5px/1 var(--ui);padding:8px 13px;border-radius:var(--rPill);cursor:pointer;transition:background .13s,color .13s,border-color .13s,transform .08s}
+.chipf:hover{border-color:var(--ink3);color:var(--ink)}
+.chipf:active{transform:translateY(1px)}
+.chipf[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chipf[aria-expanded="true"]{background:var(--surface2);border-color:var(--ink3);color:var(--ink)}
+.chipf.has{border-color:var(--ink);color:var(--ink)}
+.ctrlmore{flex-basis:100%;display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding-top:3px}
+.ctrlmore[hidden]{display:none}
+.spacer{flex:1 1 40px}
+.count{font-size:12.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
+
+/* groups, screens, blocks. One suggestion is one block: chips and title, rationale, the full
+   before and after, then the decision. Nothing about a suggestion lives anywhere else on the page. */
+.grp{margin-top:34px}
+.grp>h3{font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3);padding-bottom:9px;border-bottom:1px solid var(--ink);margin:0}
+.grp.revised>h3{color:var(--chg);border-color:var(--chg)}
+.grp.changed>h3{color:var(--new);border-color:var(--new)}
+.scr{padding:22px 0 0}
+.scr+.scr{border-top:1px solid var(--ink)}
+.scr.hide,.f.hide,.grp.hide{display:none}
+.scrhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;margin-bottom:4px}
+.sid{font:800 13px/1 var(--ui);background:var(--ink);color:#fff;padding:6px 9px;border-radius:var(--rSm)}
+.snm{font-size:17px;font-weight:700;letter-spacing:-.015em}
+.spur{font-size:13.5px;color:var(--ink3);flex-basis:100%;margin:0 0 16px;max-width:80ch}
+.badge{font:700 9px/1 var(--ui);letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:4px 6px;border:1px solid transparent}
+.badge.changed{background:var(--newSoft);color:var(--new);border-color:var(--newLine)}
+.badge.revised{background:var(--chgSoft);color:var(--chg);border-color:var(--chgLine)}
+.badge.carried{background:transparent;color:var(--ink3);border-color:var(--line)}
+.f{display:block;padding:24px 0 30px;border-top:1px solid var(--lineStrong);scroll-margin-top:84px}
+.f:target{background:var(--chgSoft);box-shadow:0 0 0 4px var(--chgSoft),0 0 0 5px var(--chgLine);border-radius:6px}
+.f.hascomment{background:linear-gradient(90deg,rgba(217,130,11,.07),transparent 60%)}
+.ftop{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.ftags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fscr{font-size:12px;color:var(--ink3)}
+.fscr b{font-weight:700;color:var(--ink2);margin-right:5px}
+.sev{font:800 10.5px/1 var(--ui);letter-spacing:.06em;padding:5px 7px;border-radius:4px;color:#fff}
+.sev.P0{background:var(--p0)}.sev.P1{background:var(--p1)}.sev.P2{background:var(--p2)}.sev.P3{background:var(--p3)}
+.cmd{font:600 10.5px/1 var(--ui);padding:5px 7px;border-radius:4px;background:var(--surface2);color:var(--ink2);border:1px solid var(--line)}
+.sz{font:700 9.5px/1 var(--ui);letter-spacing:.09em;padding:4px 6px;border-radius:3px}
+.sz.MAJOR{background:var(--chgSoft);color:var(--chg);border:1px solid var(--chgLine)}
+.sz.MINOR{color:var(--ink4);border:1px solid var(--line)}
+.pass{font:700 9px/1 var(--ui);letter-spacing:.07em;text-transform:uppercase;color:var(--ink4);border:1px solid var(--line);border-radius:3px;padding:4px 5px}
+.cflag{font:700 9px/1 var(--ui);letter-spacing:.07em;background:var(--chgDeep);color:#fff;border-radius:3px;padding:4px 5px}
+.imgcount{font:700 9px/1 var(--ui);letter-spacing:.07em;background:var(--ink);color:#fff;border-radius:3px;padding:4px 5px}
+/* the decision, repeated beside the chips so a decided block reads as decided from its first line */
+.dflag{font:700 9px/1 var(--ui);letter-spacing:.07em;text-transform:uppercase;border-radius:3px;padding:4px 6px;border:1px solid transparent}
+.dflag.approve{background:var(--okSoft);color:var(--ok);border-color:var(--okLine)}
+.dflag.reject{background:var(--noSoft);color:var(--no);border-color:var(--noLine)}
+.dflag.change{background:var(--chgSoft);color:var(--chg);border-color:var(--chgLine)}
+.what{font-size:18px;font-weight:700;letter-spacing:-.012em;line-height:1.35;margin:12px 0 10px;max-width:70ch}
+.fbody{min-width:0;max-width:96ch}
+.fbody .why,.fbody .fix{margin:0 0 6px;font-size:14px;line-height:1.5;color:var(--ink2)}
+.fbody .fix{color:var(--ink)}
+.fbody .why b,.fbody .fix b,.fbody .ev b{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);font-weight:700;margin-right:6px;vertical-align:1px}
+.fbody .ev{margin:0 0 5px;font-size:12px;color:var(--ink3);overflow-wrap:anywhere}
+.fbody .ev code{font:11.5px var(--mono)}
+.asked{background:var(--chgSoft);border:1px solid var(--chgLine);border-radius:var(--rSm);padding:11px 13px;margin:0 0 11px}
+.asked .clbl{display:block;font:700 9.5px/1 var(--ui);letter-spacing:.12em;text-transform:uppercase;color:var(--chg);margin-bottom:6px}
+.asked p{margin:0;font-size:13.5px;white-space:pre-wrap}
+.asked .thumbs{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.asked .thumbs img{width:88px;height:60px;object-fit:cover;border-radius:5px;border:1px solid var(--chgLine);display:block}
+
+/* the comparison: always open, always in the block, at full width. The close-up of the change comes
+   first, then the whole screen when the suggestion carries one. */
+.cmp{margin-top:16px}
+.pv{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pvside{background:var(--surface);border:1px solid var(--line);border-radius:var(--rSm);padding:12px 14px 14px;min-width:0;overflow-wrap:anywhere;position:relative}
+.pvside.a{background:#FBFDFB;border-color:var(--okLine)}
+.pvlbl{display:block;font:700 9px/1 var(--ui);letter-spacing:.13em;text-transform:uppercase;margin-bottom:8px}
+.pvlbl.b{color:var(--ink4)}.pvlbl.a{color:var(--ok)}
+.pvcopy{font-size:13px;line-height:1.5;margin:0;color:var(--ink2);white-space:pre-wrap}
+.pvdel{color:var(--no);font-style:italic}
+.pvch{display:inline-block;margin-top:7px;font:700 9.5px/1 var(--ui);letter-spacing:.06em;color:var(--ink4);border:1px solid var(--line);border-radius:3px;padding:3px 5px}
+.pvch.ok{color:var(--ok);border-color:var(--okLine);background:var(--okSoft)}
+.pvch.over{color:var(--no);border-color:var(--noLine);background:var(--noSoft)}
+.metric .ml{display:block;font:700 10px/1 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:6px}
+.metric .mv{display:block;font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
+.pvside.a .metric .mv{color:var(--ok)}
+.code{margin:0;font:12px/1.55 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink2);max-height:420px;overflow:auto}
+.mhost{display:block;max-width:100%;overflow:auto}
+.replay{position:absolute;top:7px;right:8px;appearance:none;border:1px solid var(--okLine);background:var(--surface);color:var(--ok);font:700 10px/1 var(--ui);letter-spacing:.06em;padding:5px 7px;border-radius:4px;cursor:pointer}
+
+/* decisions: directly under the comparison, in the same block */
+.dec{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px;padding-top:16px;border-top:1px dashed var(--rule)}
+.declbl{font:700 10px/1 var(--ui);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-right:6px}
+.dec button{appearance:none;border:1px solid var(--lineStrong);background:var(--surface);cursor:pointer;font:600 13px/1 var(--ui);padding:11px 14px;border-radius:var(--rSm);text-align:left;color:var(--ink2);transition:background .13s,border-color .13s,color .13s;display:flex;align-items:center;gap:8px;min-height:40px;min-width:148px}
+.dec button:hover{border-color:var(--ink3)}
+.dec button::before{content:"";width:13px;height:13px;border-radius:3px;border:1.5px solid var(--lineStrong);flex:none;display:grid;place-items:center;line-height:1;color:#fff}
+.dec button.on[data-d="y"]{background:var(--okSoft);border-color:var(--okLine);color:var(--ok)}
+.dec button.on[data-d="y"]::before{background:var(--ok);border-color:var(--ok);content:"\2713";font-size:10px}
+.dec button.on[data-d="n"]{background:var(--noSoft);border-color:var(--noLine);color:var(--no)}
+.dec button.on[data-d="n"]::before{background:var(--no);border-color:var(--no);content:"\00D7";font-size:12px}
+.dec button.on[data-d="c"]{background:var(--chgSoft);border-color:var(--chgLine);color:var(--chg)}
+.dec button.on[data-d="c"]::before{background:var(--chgDeep);border-color:var(--chgDeep);content:"\270E";font-size:9px}
+.cbox{margin-top:10px;max-width:880px;padding:14px 15px 15px;background:var(--chgSoft);border:1px solid var(--chgLine);border-radius:var(--rSm)}
+.cbox .clbl{display:block;font:700 9.5px/1 var(--ui);letter-spacing:.12em;text-transform:uppercase;color:var(--chg);margin-bottom:8px}
+.cbox textarea{width:100%;min-height:76px;resize:vertical;font:400 13.5px/1.55 var(--ui);color:var(--ink);background:var(--surface);border:1px solid var(--chgLine);border-radius:6px;padding:10px 11px;display:block}
+.cbox textarea:focus{outline:2px solid var(--chgDeep);outline-offset:1px;border-color:var(--chgDeep)}
+.crow{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:10px}
+.addimg{display:inline-flex;align-items:center;gap:7px;font:600 12px/1 var(--ui);color:var(--chg);background:var(--surface);border:1px dashed var(--chgLine);border-radius:6px;padding:10px 12px;cursor:pointer}
+.addimg:hover{border-color:var(--chgDeep);border-style:solid}
+.addimg:focus-within{outline:2px solid var(--chgDeep);outline-offset:1px}
+.pastehint{font-size:11.5px;color:var(--chg)}
+.atts{display:flex;flex-wrap:wrap;gap:9px;margin-top:11px}
+.att{position:relative;width:104px;border:1px solid var(--chgLine);border-radius:6px;overflow:hidden;background:var(--surface)}
+.att img{display:block;width:100%;height:72px;object-fit:cover}
+.att .nm{display:block;font-size:9.5px;color:var(--ink3);padding:4px 5px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att .del{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(22,23,26,.82);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.att .del:hover{background:var(--no)}
+
+/* whole-screen comparison, inline in the block that decides it. A comparison shared by several
+   suggestions is drawn again in each of their blocks. */
+.mk{margin-top:20px}
+.mkhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;margin:0 0 8px}
+.mklbl{font:700 9.5px/1 var(--ui);letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
+.mkhead h5{font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0}
+.mknote{color:var(--ink2);font-size:13.5px;max-width:76ch;margin:0 0 14px}
+.stackbtn{appearance:none;margin-left:auto;border:1px solid var(--lineStrong);background:var(--surface);color:var(--ink2);font:600 11.5px/1 var(--ui);padding:7px 11px;border-radius:var(--rPill);cursor:pointer}
+.stackbtn:hover{border-color:var(--ink3);color:var(--ink)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;margin-top:14px}
+.ba.stacked{grid-template-columns:1fr}
+.pane{min-width:0;position:relative}
+.panelbl{font:700 10.5px/1 var(--ui);letter-spacing:.12em;text-transform:uppercase;margin:0 0 9px;display:flex;align-items:center;gap:8px}
+.panelbl.b{color:var(--ink3)}.panelbl.a{color:var(--ok)}
+.panelbl::before{content:"";width:20px;height:2px;background:currentColor}
+.frame{background:var(--surface);border:1px solid var(--lineStrong);overflow:hidden;box-shadow:0 1px 2px rgba(22,23,26,.05),0 12px 28px -18px rgba(22,23,26,.35)}
+.frame.phone{max-width:380px;border-radius:26px}
+.frame.desktop{border-radius:10px;position:relative}
+.frame.desktop .stage{width:1280px;transform-origin:0 0;position:absolute;top:0;left:0}
+.frame.none{border:0;box-shadow:none;background:transparent}
+
+/* tables */
+.tblwrap{overflow-x:auto;margin:18px 0}
+table.sum{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+table.sum th{text-align:left;font:700 10.5px/1 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding:0 12px 9px 0;border-bottom:1px solid var(--ink)}
+table.sum td{padding:10px 12px 10px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+table.sum td:first-child{font-weight:650;white-space:nowrap}
+ol.steps{margin:0;padding-left:20px;max-width:74ch;color:var(--ink2)}
+ol.steps li{margin-bottom:8px}
+ol.steps b{color:var(--ink)}
+
+/* export bar */
+.exportbar{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--ink);color:#fff;padding:12px 24px;display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;box-shadow:0 -6px 24px -12px rgba(22,23,26,.5)}
+.exportbar .tally{font-size:13px;color:var(--onInk2);font-variant-numeric:tabular-nums}
+.exportbar .tally b{color:#fff;font-weight:700}
+.exportbar .btns{display:flex;flex-wrap:wrap;gap:10px}
+.exportbar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;color:#fff;font:600 12.5px/1 var(--ui);padding:11px 14px;border-radius:var(--rSm);cursor:pointer}
+.exportbar button:hover{background:rgba(255,255,255,.1)}
+.exportbar button.pri{background:var(--chgDeep);border-color:var(--chgDeep);color:var(--ink);font-weight:700}
+.exportbar button.pri:hover{background:#E8961F}
+.exportbar :focus-visible{outline-color:#F5C46B}
+#out{width:100%;margin-top:4px;background:#0E0F10;color:#D6D5CC;border:1px solid #2A2C2D;border-radius:var(--rSm);padding:13px;font:12px/1.6 var(--mono);min-height:150px;max-height:40vh}
+
+@media (max-width:760px){
+  .wrap{padding:0 16px 260px}
+  .mast{padding-top:30px}
+  .what{font-size:16.5px}
+  .declbl{flex-basis:100%}
+  .dec button{flex:1 1 30%;min-width:0;padding:11px 10px}
+  .pv,.ba{grid-template-columns:1fr}
+  .stackbtn{display:none}
+  .f{scroll-margin-top:62px}
+  /* the count line and the filter bar each stay one line and scroll sideways; the filter bar stays stuck to the top */
+  .stats,.ctrl{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
+  .stats::-webkit-scrollbar,.ctrl::-webkit-scrollbar{display:none}
+  .stats>*,.ctrl>*{flex:none}
+  .ctrl{padding-top:10px;padding-bottom:10px;gap:7px}
+  .ctrl .spacer{display:none}
+  .ctrlmore{flex-wrap:nowrap;padding-top:0;gap:7px}
+  .ctrlmore>*{flex:none}
+  .exportbar{padding:9px 0 10px;flex-direction:column;align-items:stretch;gap:7px}
+  .exportbar .tally{padding:0 16px;font-size:12px}
+  .exportbar .spacer{display:none}
+  .exportbar .btns{flex-wrap:nowrap;overflow-x:auto;padding:0 16px;scrollbar-width:none}
+  .exportbar .btns button{flex:none;white-space:nowrap;padding:10px 12px}
+  #out{margin:0 16px;width:auto}
+  .wrap{padding-bottom:150px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{.ctrl,.exportbar,.dec,.cbox{display:none}.scr.hide,.f.hide,.grp.hide{display:block}}
+</style>
+<style id="product-fonts"></style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast" id="mast"></header>
+  <div class="stats" id="stats" role="group" aria-label="Counts"></div>
+  <div id="notes"></div>
+
+  <!-- One decision, one place: every suggestion is a single block in #rows holding its title, rationale,
+       full before/after and decision controls. Do not add a second section that lists or compares them. -->
+  <section id="ledger">
+    <h2 class="vh">The ledger</h2>
+    <div class="ctrl" id="ctrl" role="group" aria-label="Filter suggestions"></div>
+    <div id="rows"></div>
+  </section>
+
+  <section class="sec" id="clean" hidden>
+    <h2>Screens with nothing to fix</h2>
+    <p class="sub">Worth naming, because they are the pattern the rest should follow.</p>
+    <div class="tblwrap"><table class="sum"><thead><tr><th>Screen</th><th>Why it holds up</th><th>Checked by</th></tr></thead><tbody id="cleanrows"></tbody></table></div>
+  </section>
+
+  <section class="sec">
+    <h2>What happens next</h2>
+    <ol class="steps">
+      <li><b>Decide.</b> Approve, reject, or ask for changes, right under each comparison. A note or a screenshot on any block counts as a change request.</li>
+      <li><b>Export.</b> <b>Download decisions.json</b> keeps your screenshots. <b>Copy as text</b> is quicker but drops them.</li>
+      <li><b>Hand it back to Claude.</b> Paste the text, or give the path of the downloaded file.</li>
+      <li><b>Next round.</b> Touched files are backed up, then approved rows are built. Change requests come back revised at the top. Rejected rows never return. The whole UI is reviewed again, changed screens first.</li>
+    </ol>
+  </section>
+</div>
+
+<div class="exportbar">
+  <span class="tally" id="tally" aria-live="polite">No decisions yet</span>
+  <span class="tally" id="storewarn" hidden style="color:#F5C46B"></span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button id="dljson" class="pri" type="button">Download decisions.json</button>
+    <button id="exp" type="button">Copy as text</button>
+    <button id="dl" type="button">Download report</button>
+    <button id="allyes" type="button">Approve all P0 + P1</button>
+    <button id="reset" type="button">Reset</button>
+  </div>
+  <textarea id="out" readonly aria-label="Exported decisions" hidden></textarea>
+</div>
+
+<script type="application/json" id="ledger-data">/*__LEDGER_DATA__*/</script>
+<script>
+(function(){
+'use strict';
+const D=JSON.parse(document.getElementById('ledger-data').textContent);
+const M=D.meta;
+const $=(s,r)=>(r||document).querySelector(s);
+const $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rowId=k=>'f-'+String(k).replace(/[^A-Za-z0-9_-]/g,'-');
+const chars=s=>Array.from(String(s||'')).length;
+const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'project';
+const ALL=[];D.groups.forEach(g=>g.screens.forEach(s=>s.findings.forEach(f=>ALL.push({f:f,s:s,g:g}))));
+const BYKEY=new Map(ALL.map(x=>[x.f.key,x]));
+
+/* ───── product CSS: fonts go to the document, everything else into each shadow root ───── */
+const RAW_CSS=String(D.productCss||'');
+// An @import URL can itself contain ";" (Google Fonts: wght@400;700), so match the url()/string whole.
+const FONT_RULE_RE=/@import\s+(?:url\((?:"[^"]*"|'[^']*'|[^)]*)\)|"[^"]*"|'[^']*')[^;]*;|@font-face\s*\{[^}]*\}/g;
+const FONT_RULES=(RAW_CSS.match(FONT_RULE_RE)||[]).join('\n');
+$('#product-fonts').textContent=FONT_RULES;
+const SHADOW_CSS=':host{all:initial;display:block;font-family:system-ui,sans-serif;color:#16171A;line-height:1.45}'+
+  '*,*::before,*::after{box-sizing:border-box}img,svg,video{max-width:100%}'+
+  '.type-demo p{margin:0}.type-demo.dark{background:var(--inverse,#17181A);padding:10px 12px;border-radius:8px}\n'+
+  RAW_CSS.replace(FONT_RULE_RE,'')
+    .replace(/:root\b/g,':host')
+    .replace(/(^|[\s,{}])(html|body)(?=\s*[,{.:#[>~+]|\s+[a-z.#*[])/g,'$1:host');
+let SHEET=null;
+try{SHEET=new CSSStyleSheet();SHEET.replaceSync(SHADOW_CSS);}catch(e){SHEET=null;}
+
+/* Mock markup is model-authored, so treat it as untrusted. Mocks never need working links or forms:
+   drop every navigating attribute outright, and allow src only for inert image sources.
+   Browsers strip tabs/newlines inside URLs before navigating, so never test a scheme on the raw string. */
+const NAV_ATTRS=/^(href|xlink:href|action|formaction|ping|srcset|poster|background|srcdoc|data)$/i;
+function safeSrc(v){
+  const s=String(v).replace(/[\u0000-\u0020\u007f]+/g,'').toLowerCase();
+  if(!/^[a-z][a-z0-9+.-]*:/.test(s))return true;
+  return /^(https?:|data:image\/(png|jpe?g|gif|webp|avif);)/.test(s);
+}
+function sanitize(html){
+  const t=document.createElement('template');
+  t.innerHTML=String(html||'');
+  $$('script,iframe,frame,object,embed,base,meta,link,form,portal',t.content).forEach(n=>n.remove());
+  $$('animate,set,animateMotion,animateTransform',t.content).forEach(n=>{if(/href/i.test(n.getAttribute('attributeName')||''))n.remove();});
+  $$('*',t.content).forEach(el=>Array.from(el.attributes).forEach(a=>{
+    if(/^on/i.test(a.name)||NAV_ATTRS.test(a.name)||(/^src$/i.test(a.name)&&!safeSrc(a.value)))el.removeAttribute(a.name);
+  }));
+  return t.content;
+}
+const FRAG=new Map();let fragN=0;
+function host(html){const id='x'+(fragN++);FRAG.set(id,html);return '<div class="mhost" data-frag="'+id+'"></div>';}
+function mount(el){
+  const root=el.shadowRoot||el.attachShadow({mode:'open'});
+  root.innerHTML='';
+  const frag=sanitize(FRAG.get(el.dataset.frag));
+  if(SHEET&&'adoptedStyleSheets' in root){
+    // Adopted sheets outrank <style> elements on equal specificity, so a mock's own overrides would lose to
+    // product.css. Lift them into a second adopted sheet placed after the product sheet.
+    const own=$$('style',frag);let local=null;
+    if(own.length){try{local=new CSSStyleSheet();local.replaceSync(own.map(s=>s.textContent).join('\n'));own.forEach(s=>s.remove());}catch(e){local=null;}}
+    root.adoptedStyleSheets=local?[SHEET,local]:[SHEET];
+  }
+  else{const st=document.createElement('style');st.textContent=SHADOW_CSS;root.appendChild(st);}
+  const w=document.createElement('div');w.className='mock-root';
+  w.appendChild(frag);
+  root.appendChild(w);
+}
+
+/* ───── masthead, stats, notes ───── */
+(function header(){
+  const cmds=M.commands||[];
+  const h1=M.headline?esc(M.headline):(M.round===1?"What I'd change, and <em>what it looks like</em> after.":'Round '+M.round+". What's <em>new</em> since the last build.");
+  const dek=M.dek?esc(M.dek):'Each suggestion is one block: what would change, the full before and after, and your decision right under it. Export from the bar at the bottom.';
+  const meta=[['',M.screens,'screen'+(M.screens===1?'':'s')],['',cmds.length,'command'+(cmds.length===1?'':'s')+(cmds.length&&cmds.length<=6?': '+cmds.map(esc).join(', '):'')]];
+  if(M.detectorCount!=null)meta.push(['',Number(M.detectorCount).toLocaleString(),'detector findings']);
+  (M.scores||[]).forEach(s=>meta.push([esc(s.label)+' ',esc(s.value),'']));
+  $('#mast').innerHTML='<p class="kicker">Impeccable Ledger · '+esc(M.project)+' · Round '+esc(M.roundLabel)+'</p>'+
+    '<h1>'+h1+'</h1><p class="dek">'+dek+'</p><div class="meta">'+
+    meta.map(m=>'<span>'+m[0]+'<b>'+m[1]+'</b>'+(m[2]?' '+m[2]:'')+'</span>').join('')+
+    '<span>'+esc(new Date(M.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}))+'</span></div>';
+  const st=D.stats;
+  const cells=[['',st.total,'suggestion'+(st.total===1?'':'s')],['P0',st.P0,'P0 · blocking'],['P1',st.P1,'P1 · should fix'],['P2',st.P2,'P2 · consider'],['P3',st.P3,'P3 · optional'],['',st.major,'major']];
+  if(st.revised)cells.push(['rev',st.revised,'revised for you']);
+  if(st.changed)cells.push(['chg',st.changed,'on changed screens']);
+  if(st.carried)cells.push(['',st.carried,'still undecided']);
+  $('#stats').innerHTML=cells.map(c=>'<span class="stat '+c[0]+'"><span class="n">'+c[1]+'</span><span class="l">'+c[2]+'</span></span>').join('');
+  // Round context never competes with the blocks: it folds into one line. Only a critical note
+  // (a reviewer that failed, a scan that could not run) stays open, because it changes how to read every block.
+  const nA=(D.assumptions||[]).length;let open='',folded='',nN=0;
+  if(nA)folded+='<div class="note saf"><p><b>Assumed, not confirmed.</b> There was no PRODUCT.md or DESIGN.md, so these were inferred. Correct any of them in a note on any block.</p><ul>'+
+    D.assumptions.map(a=>'<li>'+esc(a)+'</li>').join('')+'</ul></div>';
+  (D.notes||[]).forEach(n=>{
+    const tone=['saf','crit'].includes(n.tone)?' '+n.tone:'';
+    const paras=String(n.body||'').split(/\n{2,}/).map((p,i)=>'<p>'+(i===0&&n.title?'<b>'+esc(n.title)+'</b> ':'')+esc(p)+'</p>').join('');
+    const html='<div class="note'+tone+'">'+(paras||'<p><b>'+esc(n.title)+'</b></p>')+'</div>';
+    if(n.tone==='crit')open+=html;else{folded+=html;nN++;}
+  });
+  const parts=[];
+  if(nA)parts.push(nA+' assumption'+(nA===1?'':'s')+' to check');
+  if(nN)parts.push(nN+' note'+(nN===1?'':'s'));
+  $('#notes').innerHTML=open+(folded?'<details class="ctx"><summary>About this round: '+parts.join(' and ')+'</summary>'+folded+'</details>':'');
+})();
+
+/* ───── previews ───── */
+function lenChip(s,cap){
+  const n=chars(s);
+  if(!cap)return '<span class="pvch">'+n+' chars</span>';
+  return '<span class="pvch '+(n<=cap?'ok':'over')+'">'+n+' / '+cap+' chars</span>';
+}
+function typeDemo(p,style){return host('<div class="type-demo'+(p.dark?' dark':'')+'"><p style="'+esc(style)+'">'+esc(p.sample)+'</p></div>');}
+function preview(f){
+  const p=f.preview;let now='',aft='',replay='';
+  if(p.type==='copy'){
+    now='<p class="pvcopy">'+esc(p.now)+'</p>'+lenChip(p.now,null);
+    aft=p.deleted?'<p class="pvcopy pvdel">Deleted. Nothing replaces it.</p>':'<p class="pvcopy">'+esc(p.after)+'</p>'+lenChip(p.after,p.cap);
+  }else if(p.type==='type'){
+    now=typeDemo(p,p.nowStyle);aft=typeDemo(p,p.afterStyle);
+  }else if(p.type==='html'){
+    now=p.now?host(p.now):'<p class="pvcopy pvdel">Nothing here today.</p>';
+    aft=host(p.after);
+    if(p.motion)replay='<button type="button" class="replay" data-replay>Replay</button>';
+  }else if(p.type==='metric'){
+    now='<div class="metric"><span class="ml">'+esc(p.label)+'</span><span class="mv">'+esc(p.now)+'</span></div>';
+    aft='<div class="metric"><span class="ml">'+esc(p.label)+'</span><span class="mv">'+esc(p.after)+'</span></div><span class="pvch">'+esc(p.basis)+'</span>';
+  }else if(p.type==='code'){
+    now='<pre class="code"><code>'+esc(p.now)+'</code></pre>';aft='<pre class="code"><code>'+esc(p.after)+'</code></pre>';
+  }
+  return '<div class="pv"><div class="pvside"><span class="pvlbl b">Now</span>'+now+'</div>'+
+    '<div class="pvside a"><span class="pvlbl a">Proposed</span>'+aft+replay+'</div></div>';
+}
+
+/* ───── whole-screen comparison, drawn inside the block that decides it ───── */
+const MOCKS=new Map((D.mocks||[]).map(m=>[m.id,m]));
+function mockHtml(f){
+  if(!f.mock)return '';
+  // D.mocks holds the one canonical copy per id; a comparison shared by several suggestions is drawn in each block.
+  const m=MOCKS.get(f.mock.id)||f.mock;
+  const frame=b=>'<div class="frame '+esc(m.frame)+'"><div class="stage">'+host(b)+'</div></div>';
+  return '<div class="mk" data-mock="'+esc(m.id)+'"><div class="mkhead"><span class="mklbl">Whole screen</span><h5>'+esc(m.title)+'</h5>'+
+    (m.frame==='desktop'?'<button type="button" class="stackbtn" data-stack aria-pressed="false">Stack to enlarge</button>':'')+'</div>'+
+    (m.note?'<p class="mknote">'+esc(m.note)+'</p>':'')+
+    '<div class="ba"><div class="pane"><p class="panelbl b">Now</p>'+(m.now?frame(m.now):'<p class="pvcopy pvdel">Does not exist today.</p>')+'</div>'+
+    '<div class="pane"><p class="panelbl a">Proposed</p>'+frame(m.after)+(m.motion?'<button type="button" class="replay" data-replay>Replay</button>':'')+'</div></div></div>';
+}
+
+/* ───── blocks: one suggestion, one place ─────
+   Order inside a block is fixed: chips and title, rationale, the full before/after, the decision controls.
+   Never move the comparison or the controls out of the block, and never list suggestions anywhere else. */
+function rowHtml(f,s){
+  const k=f.key;
+  const tags='<span class="sev '+f.sev+'">'+f.sev+'</span><span class="cmd">'+esc(f.cmd)+'</span><span class="sz '+f.size+'">'+f.size+'</span>'+
+    (f.foundBy||[]).map(p=>'<span class="pass">'+esc(p)+'</span>').join('')+
+    (f.revised?'<span class="badge revised">Revised</span>':'')+
+    (f.fromRound&&!f.revised?'<span class="badge carried">From R'+String(f.fromRound).padStart(2,'0')+'</span>':'');
+  const asked=f.revised&&(f.prevNote||(f.prevImages||[]).length)?'<div class="asked"><span class="clbl">You asked in round '+esc(f.prevRound)+'</span>'+
+    (f.prevNote?'<p>'+esc(f.prevNote)+'</p>':'')+
+    ((f.prevImages||[]).length?'<div class="thumbs">'+f.prevImages.map(u=>'<a href="'+esc(u)+'" target="_blank" rel="noopener"><img src="'+esc(u)+'" alt="Your screenshot"></a>').join('')+'</div>':'')+'</div>':'';
+  return '<article class="f" id="'+rowId(k)+'" data-k="'+esc(k)+'" data-sev="'+f.sev+'" data-cmd="'+esc(f.cmd)+'" data-sz="'+f.size+'" data-pass="'+esc((f.foundBy||[]).join(' '))+'" data-rev="'+(f.revised?1:0)+'" data-chg="'+(s.changed?1:0)+'">'+
+    '<div class="ftop"><div class="ftags">'+tags+'</div><span class="fscr"><b>'+esc(s.id)+'</b>'+esc(s.name)+'</span></div>'+
+    '<h4 class="what">'+esc(f.what)+'</h4>'+
+    '<div class="fbody">'+asked+
+      '<p class="why"><b>Why</b>'+esc(f.why)+'</p><p class="fix"><b>Fix</b>'+esc(f.fix)+'</p>'+
+      (f.evidence?'<p class="ev"><b>Where</b><code>'+esc(f.evidence)+'</code></p>':'')+
+    '</div>'+
+    '<div class="cmp">'+preview(f)+mockHtml(f)+'</div>'+
+    '<div class="dec" role="group" aria-label="Decision"><span class="declbl">Your decision</span>'+
+      '<button type="button" data-d="y" data-k="'+esc(k)+'" aria-pressed="false">Approve</button>'+
+      '<button type="button" data-d="n" data-k="'+esc(k)+'" aria-pressed="false">Reject</button>'+
+      '<button type="button" data-d="c" data-k="'+esc(k)+'" aria-pressed="false">Changes…</button></div>'+
+    '<div class="cbox" hidden data-cbox="'+esc(k)+'">'+
+      '<label class="clbl" for="ta-'+rowId(k)+'">What should change, and how?</label>'+
+      '<textarea id="ta-'+rowId(k)+'" data-ta="'+esc(k)+'" placeholder="e.g. Keep the idea, but the after is too loud. Try the quieter token."></textarea>'+
+      '<div class="crow"><label class="addimg">+ Attach screenshot<input type="file" accept="image/*" multiple hidden data-fi="'+esc(k)+'"></label>'+
+      '<span class="pastehint">or paste an image with Ctrl+V into the box</span></div>'+
+      '<div class="atts" data-atts="'+esc(k)+'"></div></div>'+
+  '</article>';
+}
+$('#rows').innerHTML=D.groups.map(g=>'<div class="grp '+g.kind+'"><h3>'+esc(g.title)+'</h3>'+g.screens.map(s=>
+  '<div class="scr"><div class="scrhead"><span class="sid">'+esc(s.id)+'</span><span class="snm">'+esc(s.name)+'</span>'+
+  (s.changed?'<span class="badge changed">Changed last build</span>':'')+'</div>'+
+  (s.purpose?'<p class="spur">'+esc(s.purpose)+'</p>':'')+s.findings.map(f=>rowHtml(f,s)).join('')+'</div>').join('')+'</div>').join('');
+
+if(D.clean.length){
+  $('#clean').hidden=false;
+  $('#cleanrows').innerHTML=D.clean.map(c=>'<tr><td>'+esc(c.screen)+' · '+esc(c.name)+'</td><td>'+esc(c.why)+'</td><td>'+esc(c.by.join(', '))+'</td></tr>').join('');
+}
+$$('.mhost').forEach(mount);
+function fitFrame(fr){
+  // A block hidden by a filter has no width: leave its frames alone, they are fitted again when it returns.
+  const stage=fr.querySelector('.stage');if(!stage||!fr.clientWidth)return;
+  if(fr.classList.contains('desktop')){
+    const scale=fr.clientWidth/1280;
+    stage.style.transform='scale('+scale+')';
+    fr.style.height=Math.ceil(stage.scrollHeight*scale)+'px';
+    return;
+  }
+  // Phone mocks are drawn at the product's true width; scale them down when the frame is narrower, never clip.
+  stage.style.width='';stage.style.transform='';
+  const host=stage.querySelector('.mhost');const inner=host&&host.shadowRoot&&host.shadowRoot.querySelector('.mock-root');
+  const drawn=Math.max(stage.scrollWidth||0,inner?inner.scrollWidth:0);
+  const natural=fr.classList.contains('phone')?Math.max(390,drawn):drawn;
+  if(!natural)return;
+  const scale=Math.min(1,fr.clientWidth/natural);
+  stage.style.width=natural+'px';stage.style.transformOrigin='0 0';
+  stage.style.transform=scale<1?'scale('+scale+')':'';
+  fr.style.height=scale<1?Math.ceil(stage.scrollHeight*scale)+'px':'';
+}
+const allFrames=()=>$$('.frame.desktop,.frame.phone,.frame.none');
+function fitFrames(){allFrames().forEach(fitFrame);}
+fitFrames();
+// Comparisons live inside filterable blocks now, so refit only the frames whose own size changed.
+if('ResizeObserver' in window){const ro=new ResizeObserver(es=>es.forEach(e=>fitFrame(e.target)));allFrames().forEach(f=>ro.observe(f));}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitFrames);
+window.addEventListener('load',fitFrames);
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-replay]');
+  if(b){const pane=b.parentElement;$$('.mhost',pane).forEach(mount);$$('.frame',pane).forEach(fitFrame);return;}
+  const st=e.target.closest('[data-stack]');
+  if(st){
+    const ba=st.closest('.mk').querySelector('.ba');const on=ba.classList.toggle('stacked');
+    st.setAttribute('aria-pressed',String(on));st.textContent=on?'Side by side':'Stack to enlarge';
+    $$('.frame',ba).forEach(fitFrame);
+  }
+});
+
+/* ───── storage: decisions + notes in localStorage, images in IndexedDB with a localStorage fallback ───── */
+const KEY=M.storageKey+':v1', IMGK=M.storageKey+':img:v1';
+let dec={},note={};
+try{const raw=JSON.parse(localStorage.getItem(KEY)||'{}');dec=raw.dec||{};note=raw.note||{};}catch(e){}
+let SAVE_WARNED=false;
+function warnStore(msg){const w=$('#storewarn');if(w){w.hidden=false;w.textContent='· '+msg;}}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify({dec:dec,note:note}));}
+  catch(e){if(!SAVE_WARNED){SAVE_WARNED=true;warnStore('Not saving: browser storage is blocked here. Export before closing this tab.');}}
+}
+let IDB=null,IDB_OK=null;
+function idbTry(){
+  if(IDB_OK!==null)return Promise.resolve(IDB_OK);
+  return new Promise(res=>{
+    let done=false;const finish=v=>{if(!done){done=true;IDB_OK=v;res(v);}};
+    try{
+      if(!window.indexedDB)return finish(false);
+      const r=indexedDB.open('impeccable-ledger',1);
+      r.onupgradeneeded=()=>{try{r.result.createObjectStore('img');}catch(e){}};
+      r.onsuccess=()=>{IDB=r.result;finish(true);};
+      r.onerror=()=>finish(false);r.onblocked=()=>finish(false);
+      setTimeout(()=>finish(false),1500);
+    }catch(e){finish(false);}
+  });
+}
+const ikey=k=>IMGK+':'+k;
+function lsAll(){try{return JSON.parse(localStorage.getItem(IMGK)||'{}');}catch(e){return {};}}
+function lsWrite(o){try{localStorage.setItem(IMGK,JSON.stringify(o));return true;}catch(e){alert('Storage is full, so that image was not saved. Download decisions.json now to keep what you have.');return false;}}
+function imgGet(k){
+  return idbTry().then(ok=>{
+    if(!ok)return lsAll()[k]||[];
+    return new Promise(res=>{try{const t=IDB.transaction('img','readonly').objectStore('img').get(ikey(k));
+      t.onsuccess=()=>res(t.result||[]);t.onerror=()=>res([]);}catch(e){res([]);}});
+  });
+}
+function imgSet(k,v){
+  return idbTry().then(ok=>{
+    if(!ok){const a=lsAll();a[k]=v;return lsWrite(a)?undefined:Promise.reject(new Error('full'));}
+    return new Promise((res,rej)=>{try{const t=IDB.transaction('img','readwrite').objectStore('img').put(v,ikey(k));
+      t.onsuccess=()=>res();t.onerror=()=>rej(t.error);}catch(e){rej(e);}});
+  });
+}
+function imgAll(){return Promise.all(ALL.map(x=>imgGet(x.f.key).then(v=>[x.f.key,v]))).then(p=>Object.fromEntries(p));}
+function imgClear(){
+  try{localStorage.removeItem(IMGK);}catch(e){}
+  return idbTry().then(ok=>{if(ok)return Promise.all(ALL.map(x=>imgSet(x.f.key,[]).catch(()=>{})));});
+}
+function shrink(file){return new Promise(res=>{
+  const fr=new FileReader();
+  fr.onload=()=>{const im=new Image();
+    im.onload=()=>{const MAX=1100;let w=im.width,h=im.height;
+      if(w>MAX||h>MAX){const s=Math.min(MAX/w,MAX/h);w=Math.round(w*s);h=Math.round(h*s);}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);
+      let out;try{out=cv.toDataURL('image/jpeg',.78);}catch(e){out=fr.result;}
+      if(out.length>fr.result.length)out=fr.result;
+      res({name:file.name||'pasted.png',data:out});};
+    im.onerror=()=>res(null);im.src=fr.result;};
+  fr.onerror=()=>res(null);fr.readAsDataURL(file);});}
+function drawAtts(k){
+  const box=document.querySelector('[data-atts="'+CSS.escape(k)+'"]');if(!box)return;
+  imgGet(k).then(list=>{
+    box.innerHTML=(list||[]).map((im,i)=>'<div class="att"><img src="'+esc(im.data)+'" alt="'+esc(im.name)+'">'+
+      '<button type="button" class="del" data-delimg="'+esc(k)+'" data-i="'+i+'" aria-label="Remove '+esc(im.name)+'">×</button><span class="nm">'+esc(im.name)+'</span></div>').join('');
+    paint();
+  });
+}
+function addFiles(k,files){
+  const arr=Array.from(files).filter(f=>f.type.startsWith('image/'));if(!arr.length)return;
+  Promise.all(arr.map(shrink)).then(ims=>{
+    const good=ims.filter(Boolean);if(!good.length)return;
+    if(!dec[k]){dec[k]='c';save();}
+    imgGet(k).then(cur=>imgSet(k,(cur||[]).concat(good))).then(()=>drawAtts(k)).catch(()=>alert('Could not store that image. It may be too large.'));
+  });
+}
+
+/* ───── paint ───── */
+function decisionOf(k,nImg){
+  if(dec[k]==='y')return 'approve';if(dec[k]==='n')return 'reject';
+  if(dec[k]==='c'||(note[k]&&note[k].trim())||nImg)return 'change';
+  return 'undecided';
+}
+const DECISION_LABEL={approve:'Approved',reject:'Rejected',change:'Change requested'};
+function paint(){
+  $$('.dec button').forEach(b=>{const on=dec[b.dataset.k]===b.dataset.d;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
+  const tally={approve:0,reject:0,change:0,undecided:0};let notes=0,imgs=0;
+  $$('#rows .f').forEach(f=>{
+    const k=f.dataset.k,cb=f.querySelector('.cbox'),hasText=!!(note[k]&&note[k].trim());
+    const nImg=f.querySelectorAll('.att').length;
+    cb.hidden=!(dec[k]==='c'||hasText||nImg);
+    f.classList.toggle('hascomment',hasText||nImg>0);
+    const tags=f.querySelector('.ftags');let flag=tags.querySelector('.cflag'),ic=tags.querySelector('.imgcount');
+    if(hasText&&!flag){flag=document.createElement('span');flag.className='cflag';flag.textContent='NOTE';tags.appendChild(flag);}
+    if(!hasText&&flag)flag.remove();
+    if(nImg&&!ic){ic=document.createElement('span');ic.className='imgcount';tags.appendChild(ic);}
+    if(nImg)ic.textContent=nImg+' IMG';else if(ic)ic.remove();
+    const d=decisionOf(k,nImg);let df=tags.querySelector('.dflag');
+    if(d==='undecided'){if(df)df.remove();}
+    else{if(!df){df=document.createElement('span');tags.appendChild(df);}df.className='dflag '+d;df.textContent=DECISION_LABEL[d];}
+    tally[d]++;if(hasText)notes++;imgs+=nImg;
+  });
+  const decidedN=tally.approve+tally.reject+tally.change;
+  $('#tally').innerHTML=decidedN?'<b>'+tally.approve+'</b> approved · <b>'+tally.reject+'</b> rejected · <b>'+tally.change+'</b> changes · <b>'+notes+'</b> notes · <b>'+imgs+'</b> images · '+tally.undecided+' undecided':'No decisions yet · '+ALL.length+' rows';
+  if(IDB_OK===false&&!SAVE_WARNED)warnStore('Images are held in limited browser storage (about 5MB). Download decisions.json to keep them.');
+  if(F.flags.has('undecided'))apply();
+}
+
+/* ───── filters ───── */
+const F={sev:new Set(),cmd:new Set(),sz:new Set(),pass:new Set(),flags:new Set()};
+// The bar is stuck to the top for the whole ledger, so it must stay short: every line it takes is taken from
+// the comparison being judged. A long command list folds behind one chip instead of wrapping to four lines.
+const FOLD_FILTERS_AFTER=10;
+(function filters(){
+  const chip=(f,v,label)=>'<button type="button" class="chipf" data-f="'+f+'" data-v="'+esc(v)+'" aria-pressed="false">'+esc(label)+'</button>';
+  const passes=D.passesSeen.length>1?D.passesSeen:[];
+  const byCommand='<span class="lbl">Command</span>'+D.commandsSeen.map(c=>chip('cmd',c,c)).join('')+
+    (passes.length?'<span class="lbl">Found by</span>'+passes.map(c=>chip('pass',c,c)).join(''):'');
+  const fold=D.commandsSeen.length+passes.length>FOLD_FILTERS_AFTER;
+  $('#ctrl').innerHTML='<span class="lbl">Severity</span>'+['P0','P1','P2','P3'].map(v=>chip('sev',v,v)).join('')+
+    '<span class="lbl">Size</span>'+chip('sz','MAJOR','Major only')+
+    (fold?'<button type="button" class="chipf" id="moref" aria-expanded="false" aria-controls="ctrlmore">By command</button>':byCommand)+
+    '<span class="lbl">Show</span>'+chip('flags','undecided','Undecided only')+
+    (D.stats.revised?chip('flags','revised','Revised'):'')+(D.stats.changed?chip('flags','changed','Changed screens'):'')+
+    '<span class="spacer"></span><span class="count" id="cnt"></span><button type="button" class="chipf" id="clearf">Clear</button>'+
+    (fold?'<div class="ctrlmore" id="ctrlmore" hidden>'+byCommand+'</div>':'');
+})();
+function apply(){
+  let shown=0;
+  $$('#rows .f').forEach(f=>{
+    const k=f.dataset.k,passes=f.dataset.pass.split(' ');
+    const ok=(!F.sev.size||F.sev.has(f.dataset.sev))&&(!F.cmd.size||F.cmd.has(f.dataset.cmd))&&(!F.sz.size||F.sz.has(f.dataset.sz))&&
+      (!F.pass.size||passes.some(p=>F.pass.has(p)))&&
+      (!F.flags.has('undecided')||decisionOf(k,f.querySelectorAll('.att').length)==='undecided')&&
+      (!F.flags.has('revised')||f.dataset.rev==='1')&&(!F.flags.has('changed')||f.dataset.chg==='1');
+    f.classList.toggle('hide',!ok);if(ok)shown++;
+  });
+  $$('#rows .scr').forEach(s=>s.classList.toggle('hide',!s.querySelector('.f:not(.hide)')));
+  $$('#rows .grp').forEach(g=>g.classList.toggle('hide',!g.querySelector('.scr:not(.hide)')));
+  $('#cnt').textContent=shown+' of '+ALL.length+' shown';
+  // A folded command list still says how many of its filters are on.
+  const more=$('#moref');
+  if(more){const n=F.cmd.size+F.pass.size;more.textContent='By command'+(n?' · '+n+' on':'');more.classList.toggle('has',n>0);}
+}
+$('#ctrl').addEventListener('click',e=>{
+  const b=e.target.closest('.chipf');if(!b)return;
+  if(b.id==='moref'){const m=$('#ctrlmore');m.hidden=!m.hidden;b.setAttribute('aria-expanded',String(!m.hidden));return;}
+  if(b.id==='clearf'){Object.values(F).forEach(s=>s.clear());$$('.chipf[data-f]').forEach(x=>x.setAttribute('aria-pressed','false'));apply();return;}
+  const on=b.getAttribute('aria-pressed')==='true';
+  b.setAttribute('aria-pressed',String(!on));
+  if(on)F[b.dataset.f].delete(b.dataset.v);else F[b.dataset.f].add(b.dataset.v);
+  apply();
+});
+window.addEventListener('hashchange',()=>{
+  const el=location.hash.length>1?document.getElementById(decodeURIComponent(location.hash.slice(1))):null;
+  if(el&&el.classList.contains('f')&&el.classList.contains('hide')){$('#clearf').click();setTimeout(()=>el.scrollIntoView({block:'center'}),40);}
+});
+
+/* ───── row events ───── */
+const rows=$('#rows');
+rows.addEventListener('click',e=>{
+  const b=e.target.closest('.dec button');
+  if(b){
+    const k=b.dataset.k;
+    if(dec[k]===b.dataset.d)delete dec[k];else dec[k]=b.dataset.d;
+    save();paint();
+    if(dec[k]==='c'){const ta=document.querySelector('[data-ta="'+CSS.escape(k)+'"]');if(ta)setTimeout(()=>ta.focus(),30);}
+    return;
+  }
+  const d=e.target.closest('[data-delimg]');
+  if(d){const k=d.dataset.delimg,i=+d.dataset.i;imgGet(k).then(list=>imgSet(k,list.filter((_,j)=>j!==i))).then(()=>drawAtts(k));}
+});
+rows.addEventListener('input',e=>{
+  const ta=e.target.closest('[data-ta]');if(!ta)return;
+  const k=ta.dataset.ta;if(ta.value.trim())note[k]=ta.value;else delete note[k];
+  save();clearTimeout(ta._t);ta._t=setTimeout(paint,400);
+});
+rows.addEventListener('change',e=>{const fi=e.target.closest('[data-fi]');if(fi){addFiles(fi.dataset.fi,fi.files);fi.value='';}});
+rows.addEventListener('paste',e=>{
+  const ta=e.target.closest('[data-ta]');if(!ta)return;
+  const files=Array.from((e.clipboardData||{}).items||[]).filter(i=>i.kind==='file'&&i.type.startsWith('image/')).map(i=>i.getAsFile());
+  if(files.length){e.preventDefault();addFiles(ta.dataset.ta,files);}
+});
+rows.addEventListener('dragover',e=>{if(e.target.closest('.cbox'))e.preventDefault();});
+rows.addEventListener('drop',e=>{
+  const cb=e.target.closest('.cbox');if(!cb)return;e.preventDefault();
+  if(e.dataTransfer&&e.dataTransfer.files.length)addFiles(cb.dataset.cbox,e.dataTransfer.files);
+});
+Object.keys(note).forEach(k=>{const ta=document.querySelector('[data-ta="'+CSS.escape(k)+'"]');if(ta)ta.value=note[k];});
+ALL.forEach(x=>drawAtts(x.f.key));
+
+$('#allyes').addEventListener('click',()=>{ALL.forEach(x=>{if((x.f.sev==='P0'||x.f.sev==='P1')&&!dec[x.f.key])dec[x.f.key]='y';});save();paint();});
+$('#reset').addEventListener('click',()=>{
+  if(!confirm('Clear every decision, note and attached image on this ledger? This cannot be undone.'))return;
+  dec={};note={};save();imgClear().then(()=>ALL.forEach(x=>drawAtts(x.f.key)));
+  $$('[data-ta]').forEach(t=>{t.value='';});$('#out').hidden=true;paint();
+});
+
+/* ───── export ───── */
+function collect(images){
+  return ALL.map(x=>{
+    const f=x.f,k=f.key,ims=(images&&images[k])||[];
+    const nImg=images?ims.length:(document.querySelector('[data-atts="'+CSS.escape(k)+'"]')||{children:[]}).children.length;
+    return {key:k,decision:decisionOf(k,nImg),note:(note[k]||'').trim(),images:ims,imageCount:nImg,
+      sev:f.sev,cmd:f.cmd,size:f.size,foundBy:f.foundBy||[],screen:x.s.id,screenName:x.s.name,what:f.what,fix:f.fix,revised:!!f.revised};
+  });
+}
+const oneLine=s=>String(s).replace(/\s+/g,' ').trim();
+function textLine(r){
+  let s='['+r.sev+'|'+r.cmd+'|'+r.foundBy.join('+')+'] '+r.screen+' · '+oneLine(r.what)+'  #key='+r.key;
+  if(r.note)s+='\n    MY INSTRUCTION: '+r.note.replace(/\n/g,'\n    ');
+  if(r.imageCount)s+='\n    IMAGES ATTACHED: '+r.imageCount+' (only in decisions.json or the report)';
+  return s;
+}
+function buckets(items){
+  const b={change:[],approve:[],reject:[],undecided:[]};items.forEach(r=>b[r.decision].push(r));return b;
+}
+$('#exp').addEventListener('click',()=>{
+  const b=buckets(collect(null));
+  const hdr=s=>'\n'+s+'\n'+'='.repeat(58)+'\n';
+  let out=String(M.project).toUpperCase()+' · DESIGN DECISIONS · ROUND '+M.roundLabel+'\n'+new Date().toLocaleString()+'\n';
+  out+=hdr('CHANGES REQUESTED ('+b.change.length+') · read these first')+(b.change.length?b.change.map(textLine).join('\n\n'):'(none)')+'\n';
+  out+=hdr('APPROVED ('+b.approve.length+') · build as written')+(b.approve.length?b.approve.map(textLine).join('\n'):'(none)')+'\n';
+  out+=hdr('REJECTED ('+b.reject.length+') · never re-suggest')+(b.reject.length?b.reject.map(textLine).join('\n'):'(none)')+'\n';
+  out+=hdr('UNDECIDED ('+b.undecided.length+')')+(b.undecided.length?b.undecided.map(textLine).join('\n'):'(none)')+'\n';
+  const el=$('#out');el.hidden=false;el.value=out;el.focus();el.select();
+  const done=()=>{$('#exp').textContent='Copied';setTimeout(()=>{$('#exp').textContent='Copy as text';},1600);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(out).then(done,()=>{try{document.execCommand('copy');done();}catch(e){}});
+  else{try{document.execCommand('copy');done();}catch(e){}}
+});
+function download(name,type,content){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type:type}));a.download=name;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+}
+const base=slug(M.project)+'-round-'+M.roundLabel;
+$('#dljson').addEventListener('click',()=>{
+  imgAll().then(images=>{
+    const items=collect(images),b=buckets(items);
+    const doc={schema:'impeccable-ledger/decisions@1',project:M.project,round:M.round,exportedAt:new Date().toISOString(),
+      counts:{approve:b.approve.length,reject:b.reject.length,change:b.change.length,undecided:b.undecided.length},
+      items:items.map(r=>({key:r.key,decision:r.decision,note:r.note,images:r.images,sev:r.sev,cmd:r.cmd,screen:r.screen,what:r.what,fix:r.fix}))};
+    download(base+'-decisions.json','application/json',JSON.stringify(doc,null,1));
+  });
+});
+$('#dl').addEventListener('click',()=>{
+  imgAll().then(images=>{
+    const b=buckets(collect(images));
+    const sec=(title,list,cls)=>!list.length?'':'<h2 class="'+cls+'">'+title+' ('+list.length+')</h2>'+list.map(r=>
+      '<article><p class="t"><b>['+esc(r.sev)+' · '+esc(r.cmd)+']</b> '+esc(r.screen)+' · '+esc(r.screenName)+'</p><p class="w">'+esc(r.what)+'</p>'+
+      '<p class="fx"><b>Proposed fix:</b> '+esc(r.fix)+'</p>'+
+      (r.note?'<div class="ins"><b>MY INSTRUCTION</b><p>'+esc(r.note).replace(/\n/g,'<br>')+'</p></div>':'')+
+      (r.images.length?'<div class="ims">'+r.images.map(im=>'<figure><img src="'+esc(im.data)+'" alt=""><figcaption>'+esc(im.name)+'</figcaption></figure>').join('')+'</div>':'')+
+      '<p class="k">#key='+esc(r.key)+'</p></article>').join('');
+    const doc='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(M.project)+' · Design Decisions · Round '+M.roundLabel+'</title>'+
+      '<style>body{font:15px/1.55 system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#16171A;background:#F6F5F1}'+
+      'h1{font-size:30px;letter-spacing:-.02em}h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;border-bottom:2px solid #16171A;padding-bottom:7px;margin-top:40px}'+
+      'h2.c{color:#8A5A08;border-color:#8A5A08}h2.y{color:#26512F;border-color:#26512F}h2.n{color:#B3261E;border-color:#B3261E}'+
+      'article{border-bottom:1px solid #DCDAD1;padding:15px 0}p{margin:0 0 6px}.t{font-size:13px;color:#46484A}.w{font-weight:600}.fx{font-size:13.5px;color:#46484A}'+
+      '.k{font:11px ui-monospace,monospace;color:#AEAFA9}.ins{background:#FDF4E2;border:1px solid #F0DDB4;border-radius:8px;padding:12px 14px;margin:10px 0}'+
+      '.ins b{font-size:10px;letter-spacing:.12em;color:#8A5A08;display:block;margin-bottom:5px}.ims{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}'+
+      'figure{margin:0;max-width:340px}figure img{max-width:100%;border:1px solid #DCDAD1;border-radius:7px;display:block}figcaption{font-size:11px;color:#7C7E7A;margin-top:4px}</style>'+
+      '<h1>'+esc(M.project)+' · design decisions, round '+M.roundLabel+'</h1><p>'+esc(new Date().toLocaleString())+' · '+
+      b.change.length+' changes requested · '+b.approve.length+' approved · '+b.reject.length+' rejected · '+b.undecided.length+' undecided</p>'+
+      sec('Changes requested',b.change,'c')+sec('Approved as written',b.approve,'y')+sec('Rejected',b.reject,'n');
+    download(base+'-decisions-report.html','text/html',doc);
+  });
+});
+
+paint();apply();
+})();
+</script>
+</body>
+</html>
